@@ -1,20 +1,30 @@
-from fastapi import Query, APIRouter
+from typing import Annotated
+
+from fastapi import Query, APIRouter, Body, Depends
 from schemas.hotels import Hotel, HotelPATCH
+from dependencies import PaginationDep
 
 
 router=APIRouter(prefix="/hotels",  tags=["Hotels"])
 
 
 hotels = [
-    {"id":1, "title":"Reni", "name":"reni"},
-    {"id":2, "title":"Izmail", "name":"izmail"}
+    { "id": 1, "title": "Hotel Laguna", "name": "hotel-laguna-reni" },
+    { "id": 2, "title": "Hotel Uyut", "name": "hotel-uyut-reni" },
+    { "id": 3, "title": "Hotel Dunay", "name": "hotel-dunay-reni" },
+    { "id": 4, "title": "Hotel Bessarabia", "name": "hotel-bessarabia-izmail" },
+    { "id": 5, "title": "Hotel Old Town", "name": "hotel-old-town-izmail" },
+    { "id": 6, "title": "VIP Hotel", "name": "vip-hotel-izmail" },
+    { "id": 7, "title": "Hotel Green Hall", "name": "hotel-green-hall-izmail" }
 ]
 
 
 @router.get("")
 def get_hotels(
+    pagination: PaginationDep,
     id: int | None = Query(None, description="Id"),
-    title:str | None = Query(None, description="Title")
+    title: str | None = Query(None, description="Title"),
+
 ):
     hotels_ =[]
     for hotel in hotels:
@@ -23,11 +33,18 @@ def get_hotels(
         if id and hotel["id"] != id:
             continue
         hotels_.append(hotel)
+    if pagination.page and pagination.per_page:    
+        return hotels_[pagination.per_page*(pagination.page - 1):][:pagination.per_page]
     return hotels_
 
 
 @router.post("")
-def create_hotel(hotel_data: Hotel):
+def create_hotel(hotel_data: Hotel=Body(openapi_examples={
+    "1":{"summary":"Odessa", "value":{
+        "title": "Odessa 5 stars hotel",
+        "name":"odessa_5_stars"
+    }}
+})):
     global hotels
     hotels.append({
         "id":hotels[-1]["id"]+1,
