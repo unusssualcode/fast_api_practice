@@ -9,4 +9,4 @@ class PaginationParams(BaseModel):
     per_page: Annotated[int | None , Query(None, ge=1, lt=30)]
     
 
-PaginationDep = Annotated[PaginationParams, Depends]
+PaginationDep = Annotated[PaginationParams, Depends()]
