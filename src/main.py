@@ -10,6 +10,8 @@ from src.api.hotels import router as router_hotels
 from src.config import settings
 
 
+
+
 app = FastAPI()
 
 app.include_router(router_hotels)
