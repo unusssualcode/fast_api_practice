@@ -1,8 +1,11 @@
 from typing import Annotated
+from sqlalchemy import insert
 
 from fastapi import Query, APIRouter, Body, Depends
+from models.hotels import HotelsOrm
 from schemas.hotels import Hotel, HotelPATCH
 from src.api.dependencies import PaginationDep
+from src.database import async_session_maker
 
 
 router=APIRouter(prefix="/hotels",  tags=["Hotels"])
@@ -39,18 +42,18 @@ def get_hotels(
 
 
 @router.post("")
-def create_hotel(hotel_data: Hotel=Body(openapi_examples={
+async def create_hotel(hotel_data: Hotel=Body(openapi_examples={
     "1":{"summary":"Odessa", "value":{
         "title": "Odessa 5 stars hotel",
-        "name":"odessa_5_stars"
+        "location":"odessa_5_stars"
     }}
 })):
-    global hotels
-    hotels.append({
-        "id":hotels[-1]["id"]+1,
-        "title":hotel_data.title, 
-        "name":hotel_data.name
-    })
+    async with async_session_maker() as session:
+        add_hotel_stmt = insert(HotelsOrm).values(**hotel_data.model_dump())
+        print(add_hotel_stmt.compile(compile_kwargs={"literal_binds":True}))
+        await session.execute(add_hotel_stmt)
+        await session.commit()
+    
     return {"status":"OK"}
 
 
