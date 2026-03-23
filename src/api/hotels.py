@@ -1,5 +1,5 @@
 from typing import Annotated
-from sqlalchemy import engine, insert, select
+from sqlalchemy import engine, insert, select, func
 
 from fastapi import Query, APIRouter, Body, Depends
 from models.hotels import HotelsOrm
@@ -17,12 +17,22 @@ router=APIRouter(prefix="/hotels",  tags=["Hotels"])
 @router.get("")
 async def get_hotels(
     pagination: PaginationDep,
-    id: int | None = Query(None, description="Id"),
+    location: str | None = Query(None, description="Location"),
     title: str | None = Query(None, description="Title"),
 
 ):
+    per_page = pagination.per_page or 5
     async with async_session_maker() as session:
         query = select(HotelsOrm)
+        if location:
+            query = query.filter(func.lower(HotelsOrm.location).like(f"%{location.strip().lower()}%"))
+        if title:
+            query = query.filter(func.lower(HotelsOrm.title).like(f"%{title.strip().lower()}%"))
+        query = (
+            query
+            .limit(per_page)
+            .offset(per_page * (pagination.page - 1))
+        )
         result = await session.execute(query)
         hotels = result.scalars().all()
         return hotels
