@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from fastapi import HTTPException
 import jwt
 from pwdlib import PasswordHash
 from src.config import settings
@@ -25,4 +26,7 @@ class AuthService:
     
     
     def decode_token(self, token: str) -> dict:
-        return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        try:
+            return jwt.decode(token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM])
+        except jwt.exceptions.DecodeError:
+            raise HTTPException(status_code=401, detail="Invalid token")
